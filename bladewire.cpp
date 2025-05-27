@@ -48,6 +48,11 @@ void onMouseMove(GLFWwindow* window, double xpos, double ypos) {
     cameraFront = glm::normalize(dir);
 }
 
+glm::vec3 velocity(0.0f); // current velocity (x,y,z)
+bool onGround = true;
+const float gravity = -13.0f;
+const float jumpVelocity = 5.0f;
+
 void handleKeyboardInput(GLFWwindow* window) {
     float speed = 5.0f * deltaTime;
     glm::vec3 flatFront = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
@@ -57,7 +62,24 @@ void handleKeyboardInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cameraPos -= flatFront * speed;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) cameraPos -= right * speed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) cameraPos += right * speed;
-    if (cameraPos.y < 1.0f) cameraPos.y = 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && onGround) {
+        velocity.y = jumpVelocity;
+        onGround = false;
+    }
+}
+
+void updatePhysics() {
+    if (!onGround) {
+        velocity.y += gravity * deltaTime;
+        cameraPos.y += velocity.y * deltaTime;
+
+        if (cameraPos.y <= 1.0f) {
+            cameraPos.y = 1.0f;
+            velocity.y = 0.0f;
+            onGround = true;
+        }
+    }
 }
 
 const char* vertexShaderSrc = R"(
@@ -293,6 +315,7 @@ int main() {
         lastFrame = current;
 
         handleKeyboardInput(window);
+        updatePhysics();
         handleCollision();
 
         glClearColor(0, 0, 0, 1);
