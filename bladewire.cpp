@@ -50,8 +50,8 @@ void onMouseMove(GLFWwindow* window, double xpos, double ypos) {
 
 glm::vec3 velocity(0.0f); // current velocity (x,y,z)
 bool onGround = true;
-const float gravity = -13.0f;
-const float jumpVelocity = 5.0f;
+const float gravity = -9.8f;
+const float jumpVelocity = 4.0f;
 
 void handleKeyboardInput(GLFWwindow* window) {
     float speed = 5.0f * deltaTime;
