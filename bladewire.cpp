@@ -48,7 +48,7 @@ void onMouseMove(GLFWwindow* window, double xpos, double ypos) {
     cameraFront = glm::normalize(dir);
 }
 
-glm::vec3 velocity(0.0f); // current velocity (x,y,z)
+glm::vec3 velocity(0.0f);
 bool onGround = true;
 const float gravity = -9.8f;
 const float jumpVelocity = 4.0f;
@@ -207,6 +207,14 @@ void drawHUD(GLuint hudShader) {
         drawQuad(hudShader, { 400 + i * 60, SCREEN_HEIGHT - 40 }, { 40, 20 }, { 1, 1, 1 });
         drawQuad(hudShader, { SCREEN_WIDTH - 700 + i * 60, SCREEN_HEIGHT - 40 }, { 40, 20 }, { 1, 0, 0 });
     }
+
+    float cx = SCREEN_WIDTH / 2.0f;
+    float cy = SCREEN_HEIGHT / 2.0f;
+    float thickness = 4.0f;
+    float length = 10.0f;
+
+    drawQuad(hudShader, { cx - length, cy - thickness / 2 }, { 2 * length, thickness }, { 1, 0, 0 });
+    drawQuad(hudShader, { cx - thickness / 2, cy - length }, { thickness, 2 * length }, { 1, 0, 0 });
 }
 
 void drawWall(GLuint shader, glm::vec3 pos, glm::vec3 size, glm::vec3 color) {
@@ -244,20 +252,15 @@ void drawWall(GLuint shader, glm::vec3 pos, glm::vec3 size, glm::vec3 color) {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
-
     glUniform3fv(glGetUniformLocation(shader, "color"), 1, &color[0]);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
     glDeleteVertexArrays(1, &VAO);
@@ -290,96 +293,59 @@ void handleCollision() {
     if (cameraPos.z > max) cameraPos.z = max;
 }
 
-void drawCrosshair(GLuint hudShader) {
-    glUseProgram(hudShader);
-    glm::mat4 ortho = glm::ortho(0.0f, (float)SCREEN_WIDTH, 0.0f, (float)SCREEN_HEIGHT);
-    glUniformMatrix4fv(glGetUniformLocation(hudShader, "projection"), 1, GL_FALSE, &ortho[0][0]);
-
-    float centerX = SCREEN_WIDTH / 2.0f;
-    float centerY = SCREEN_HEIGHT / 2.0f;
-    float size = 10.0f; // length of each crosshair arm
-
-    // Horizontal line vertices
-    float horizStart[] = { centerX - size, centerY, 0.0f };
-    float horizEnd[]   = { centerX + size, centerY, 0.0f };
-
-    // Vertical line vertices
-    float vertStart[] = { centerX, centerY - size, 0.0f };
-    float vertEnd[]   = { centerX, centerY + size, 0.0f };
-
-    GLuint VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // Draw horizontal line
-    float horizVertices[] = {
-        horizStart[0], horizStart[1], horizStart[2],
-        horizEnd[0],   horizEnd[1],   horizEnd[2]
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(horizVertices), horizVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    glUniform3f(glGetUniformLocation(hudShader, "color"), 1.0f, 0.0f, 0.0f);
-    glDrawArrays(GL_LINES, 0, 2);
-
-    // Draw vertical line
-    float vertVertices[] = {
-        vertStart[0], vertStart[1], vertStart[2],
-        vertEnd[0],   vertEnd[1],   vertEnd[2]
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertVertices), vertVertices, GL_STATIC_DRAW);
-    glDrawArrays(GL_LINES, 0, 2);
-
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
-}
-
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "BladeWire", nullptr, nullptr);
+    if (!window) {
+        std::cerr << "Failed to create window\n";
+        glfwTerminate();
+        return -1;
+    }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, onFramebufferResize);
     glfwSetCursorPosCallback(window, onMouseMove);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n";
+        return -1;
+    }
 
-    GLuint shader3D = createShaderProgram(vertexShaderSrc, fragmentShaderSrc);
-    GLuint shaderHUD = createShaderProgram(hudVertexShaderSrc, fragmentShaderSrc);
+    GLuint shaderProgram = createShaderProgram(vertexShaderSrc, fragmentShaderSrc);
+    GLuint hudShader = createShaderProgram(hudVertexShaderSrc, fragmentShaderSrc);
+
+    glEnable(GL_DEPTH_TEST);
 
     while (!glfwWindowShouldClose(window)) {
-        float current = glfwGetTime();
-        deltaTime = current - lastFrame;
-        lastFrame = current;
+        float currentFrame = (float)glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
 
         handleKeyboardInput(window);
-        updatePhysics();
         handleCollision();
+        updatePhysics();
 
-        glClearColor(0, 0, 0, 1);
+        glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(shader3D);
+        glUseProgram(shaderProgram);
+        glm::mat4 projection = glm::perspective(glm::radians(fov), (float)SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        glm::mat4 proj = glm::perspective(glm::radians(fov), (float)SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 model = glm::mat4(1.0f);
-        glUniformMatrix4fv(glGetUniformLocation(shader3D, "view"), 1, GL_FALSE, &view[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shader3D, "projection"), 1, GL_FALSE, &proj[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shader3D, "model"), 1, GL_FALSE, &model[0][0]);
-        drawGrid(shader3D);
-        drawWalls(shader3D);
 
-        drawHUD(shaderHUD);
-        drawCrosshair(shaderHUD);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
+
+        drawGrid(shaderProgram);
+        drawWalls(shaderProgram);
+
+        drawHUD(hudShader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
