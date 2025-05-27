@@ -290,6 +290,53 @@ void handleCollision() {
     if (cameraPos.z > max) cameraPos.z = max;
 }
 
+void drawCrosshair(GLuint hudShader) {
+    glUseProgram(hudShader);
+    glm::mat4 ortho = glm::ortho(0.0f, (float)SCREEN_WIDTH, 0.0f, (float)SCREEN_HEIGHT);
+    glUniformMatrix4fv(glGetUniformLocation(hudShader, "projection"), 1, GL_FALSE, &ortho[0][0]);
+
+    float centerX = SCREEN_WIDTH / 2.0f;
+    float centerY = SCREEN_HEIGHT / 2.0f;
+    float size = 10.0f; // length of each crosshair arm
+
+    // Horizontal line vertices
+    float horizStart[] = { centerX - size, centerY, 0.0f };
+    float horizEnd[]   = { centerX + size, centerY, 0.0f };
+
+    // Vertical line vertices
+    float vertStart[] = { centerX, centerY - size, 0.0f };
+    float vertEnd[]   = { centerX, centerY + size, 0.0f };
+
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    // Draw horizontal line
+    float horizVertices[] = {
+        horizStart[0], horizStart[1], horizStart[2],
+        horizEnd[0],   horizEnd[1],   horizEnd[2]
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(horizVertices), horizVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glUniform3f(glGetUniformLocation(hudShader, "color"), 1.0f, 0.0f, 0.0f);
+    glDrawArrays(GL_LINES, 0, 2);
+
+    // Draw vertical line
+    float vertVertices[] = {
+        vertStart[0], vertStart[1], vertStart[2],
+        vertEnd[0],   vertEnd[1],   vertEnd[2]
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertVertices), vertVertices, GL_STATIC_DRAW);
+    glDrawArrays(GL_LINES, 0, 2);
+
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
+}
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -332,6 +379,7 @@ int main() {
         drawWalls(shader3D);
 
         drawHUD(shaderHUD);
+        drawCrosshair(shaderHUD);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
