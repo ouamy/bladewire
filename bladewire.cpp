@@ -4,9 +4,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <vector>
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <fstream>
+#include <cstring>
 
 const unsigned int SCREEN_WIDTH = 1920;
 const unsigned int SCREEN_HEIGHT = 1080;
+bool audioInitialized = false;
+ALuint source = 0;
 
 glm::vec3 cameraPos   = { 0.0f, 1.0f, 3.0f };
 glm::vec3 cameraFront = { 0.0f, 0.0f, -1.0f };
@@ -54,7 +60,14 @@ const float gravity = -9.8f;
 const float jumpVelocity = 4.0f;
 
 void handleKeyboardInput(GLFWwindow* window) {
-    float speed = 5.0f * deltaTime;
+    float walkSpeed = 2.5f;
+    float runSpeed = 5.0f;
+    float speed = walkSpeed * deltaTime;
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        speed = runSpeed * deltaTime;
+    }
+
     glm::vec3 flatFront = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
     glm::vec3 right = glm::normalize(glm::cross(flatFront, cameraUp));
 
@@ -66,6 +79,36 @@ void handleKeyboardInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && onGround) {
         velocity.y = jumpVelocity;
         onGround = false;
+    }
+}
+
+bool isWalking = false;
+
+void updateWalkingSound(GLFWwindow* window) {
+    if (!audioInitialized) return;
+
+    bool moving =
+        glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+
+    ALint state;
+    alGetSourcei(source, AL_SOURCE_STATE, &state);
+
+    if (moving) {
+        bool running = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+        float pitch = running ? 1.25f : 1.0f;
+
+        alSourcef(source, AL_PITCH, pitch);
+
+        if (state != AL_PLAYING) {
+            alSourcePlay(source);
+            isWalking = true;
+        }
+    } else if (state == AL_PLAYING) {
+        alSourcePause(source);
+        isWalking = false;
     }
 }
 
@@ -226,13 +269,12 @@ void drawWall(GLuint shader, glm::vec3 pos, glm::vec3 size, glm::vec3 color) {
     float d = size.z;
 
     float vertices[] = {
-        // front face
+
         x,     y,     z + d,
         x + w, y,     z + d,
         x + w, y + h, z + d,
         x,     y + h, z + d,
 
-        // back face
         x,     y,     z,
         x + w, y,     z,
         x + w, y + h, z,
@@ -240,12 +282,12 @@ void drawWall(GLuint shader, glm::vec3 pos, glm::vec3 size, glm::vec3 color) {
     };
 
     unsigned int indices[] = {
-        0,1,2, 2,3,0, // front
-        4,5,6, 6,7,4, // back
-        0,1,5, 5,4,0, // bottom
-        3,2,6, 6,7,3, // top
-        1,2,6, 6,5,1, // right
-        0,3,7, 7,4,0  // left
+        0,1,2, 2,3,0,
+        4,5,6, 6,7,4,
+        0,1,5, 5,4,0,
+        3,2,6, 6,7,3,
+        1,2,6, 6,5,1,
+        0,3,7, 7,4,0
     };
 
     GLuint VAO, VBO, EBO;
@@ -272,13 +314,9 @@ void drawWalls(GLuint shader) {
     float min = -10.0f;
     float max = 10.0f;
 
-    // Front wall (along x axis)
     drawWall(shader, {min, 0.0f, max}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
-    // Back wall
     drawWall(shader, {min, 0.0f, min - thickness}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
-    // Left wall (along z axis)
     drawWall(shader, {min - thickness, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
-    // Right wall
     drawWall(shader, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
 }
 
@@ -291,6 +329,162 @@ void handleCollision() {
     if (cameraPos.x > max) cameraPos.x = max;
     if (cameraPos.z < min) cameraPos.z = min;
     if (cameraPos.z > max) cameraPos.z = max;
+}
+
+struct WAVData {
+    ALsizei size;
+    ALsizei freq;
+    std::vector<char> data;
+    ALenum format;
+};
+
+WAVData loadWAV(const char* filename) {
+    std::ifstream file(filename, std::ios::binary);
+    WAVData wav{};
+
+    if (!file) throw std::runtime_error("Failed to open WAV file");
+
+    char chunkId[4];
+    uint32_t chunkSize;
+    char format[4];
+
+    file.read(chunkId, 4);
+    file.read(reinterpret_cast<char*>(&chunkSize), 4);
+    file.read(format, 4);
+
+    if (std::strncmp(chunkId, "RIFF", 4) != 0 || std::strncmp(format, "WAVE", 4) != 0)
+        throw std::runtime_error("Not a valid WAV file");
+
+    while (file) {
+        char subchunkId[4];
+        uint32_t subchunkSize;
+        file.read(subchunkId, 4);
+        file.read(reinterpret_cast<char*>(&subchunkSize), 4);
+
+        if (std::strncmp(subchunkId, "fmt ", 4) == 0) {
+            uint16_t audioFormat, numChannels;
+            uint32_t sampleRate, byteRate;
+            uint16_t blockAlign, bitsPerSample;
+
+            file.read(reinterpret_cast<char*>(&audioFormat), 2);
+            file.read(reinterpret_cast<char*>(&numChannels), 2);
+            file.read(reinterpret_cast<char*>(&sampleRate), 4);
+            file.read(reinterpret_cast<char*>(&byteRate), 4);
+            file.read(reinterpret_cast<char*>(&blockAlign), 2);
+            file.read(reinterpret_cast<char*>(&bitsPerSample), 2);
+
+            file.seekg(subchunkSize - 16, std::ios_base::cur);
+
+            if (audioFormat != 1) throw std::runtime_error("Only PCM WAV supported");
+
+            if (numChannels == 1) {
+                wav.format = (bitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
+            } else if (numChannels == 2) {
+                wav.format = (bitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
+            } else {
+                throw std::runtime_error("Unsupported channel count");
+            }
+
+            wav.freq = sampleRate;
+        } else if (std::strncmp(subchunkId, "data", 4) == 0) {
+            wav.data.resize(subchunkSize);
+            file.read(wav.data.data(), subchunkSize);
+            wav.size = subchunkSize;
+            break;
+        } else {
+            file.seekg(subchunkSize, std::ios_base::cur);
+        }
+    }
+
+    return wav;
+}
+
+ALCdevice* device = nullptr;
+ALCcontext* context = nullptr;
+ALuint buffer = 0;
+
+bool initOpenAL(const char* wavFilePath) {
+    device = alcOpenDevice(nullptr);
+    if (!device) return false;
+
+    context = alcCreateContext(device, nullptr);
+    if (!context) {
+        alcCloseDevice(device);
+        return false;
+    }
+    alcMakeContextCurrent(context);
+
+    alGenSources(1, &source);
+    alGenBuffers(1, &buffer);
+
+    auto loadWav = [](const char* filename, ALuint* outBuffer) -> bool {
+        std::ifstream file(filename, std::ios::binary);
+        if (!file) return false;
+
+        char riff[4];
+        file.read(riff, 4);
+        if (std::strncmp(riff, "RIFF", 4) != 0) return false;
+
+        file.seekg(22);
+        short channels;
+        file.read(reinterpret_cast<char*>(&channels), sizeof(short));
+        unsigned int sampleRate;
+        file.read(reinterpret_cast<char*>(&sampleRate), sizeof(unsigned int));
+        file.seekg(34);
+        short bitsPerSample;
+        file.read(reinterpret_cast<char*>(&bitsPerSample), sizeof(short));
+
+        char dataChunkId[4];
+        unsigned int dataSize = 0;
+        while (file.read(dataChunkId, 4)) {
+            unsigned int chunkSize = 0;
+            file.read(reinterpret_cast<char*>(&chunkSize), sizeof(unsigned int));
+            if (std::strncmp(dataChunkId, "data", 4) == 0) {
+                dataSize = chunkSize;
+                break;
+            }
+            file.seekg(chunkSize, std::ios::cur);
+        }
+        if (dataSize == 0) return false;
+
+        std::vector<char> data(dataSize);
+        file.read(data.data(), dataSize);
+
+        ALenum format = 0;
+        if (channels == 1) {
+            format = (bitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
+        } else if (channels == 2) {
+            format = (bitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
+        } else {
+            return false;
+        }
+
+        alBufferData(*outBuffer, format, data.data(), static_cast<ALsizei>(data.size()), sampleRate);
+        return true;
+    };
+
+    if (!loadWav(wavFilePath, &buffer)) return false;
+
+    alSourcei(source, AL_BUFFER, buffer);
+    alSourcei(source, AL_LOOPING, AL_TRUE);
+    alSourcef(source, AL_GAIN, 0.3f);
+
+    audioInitialized = true;
+    return true;
+}
+
+void cleanupOpenAL() {
+    if (!audioInitialized) return;
+
+    alSourceStop(source);
+    alDeleteSources(1, &source);
+    alDeleteBuffers(1, &buffer);
+
+    alcMakeContextCurrent(nullptr);
+    alcDestroyContext(context);
+    alcCloseDevice(device);
+
+    audioInitialized = false;
 }
 
 int main() {
@@ -320,6 +514,10 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
+    if (!initOpenAL("sounds/walking.wav")) {
+        std::cerr << "Failed to initialize audio\n";
+    } 
+
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -328,6 +526,7 @@ int main() {
         handleKeyboardInput(window);
         handleCollision();
         updatePhysics();
+        updateWalkingSound(window);
 
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -350,7 +549,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
+    cleanupOpenAL();
     glfwTerminate();
     return 0;
 }
