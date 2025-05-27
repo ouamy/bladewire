@@ -187,6 +187,87 @@ void drawHUD(GLuint hudShader) {
     }
 }
 
+void drawWall(GLuint shader, glm::vec3 pos, glm::vec3 size, glm::vec3 color) {
+    float x = pos.x;
+    float y = pos.y;
+    float z = pos.z;
+    float w = size.x;
+    float h = size.y;
+    float d = size.z;
+
+    float vertices[] = {
+        // front face
+        x,     y,     z + d,
+        x + w, y,     z + d,
+        x + w, y + h, z + d,
+        x,     y + h, z + d,
+
+        // back face
+        x,     y,     z,
+        x + w, y,     z,
+        x + w, y + h, z,
+        x,     y + h, z,
+    };
+
+    unsigned int indices[] = {
+        0,1,2, 2,3,0, // front
+        4,5,6, 6,7,4, // back
+        0,1,5, 5,4,0, // bottom
+        3,2,6, 6,7,3, // top
+        1,2,6, 6,5,1, // right
+        0,3,7, 7,4,0  // left
+    };
+
+    GLuint VAO, VBO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+
+    glUniform3fv(glGetUniformLocation(shader, "color"), 1, &color[0]);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteVertexArrays(1, &VAO);
+}
+
+void drawWalls(GLuint shader) {
+    float height = 2.0f;
+    float thickness = 1.0f;
+    float min = -10.0f;
+    float max = 10.0f;
+
+    // Front wall (along x axis)
+    drawWall(shader, {min, 0.0f, max}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
+    // Back wall
+    drawWall(shader, {min, 0.0f, min - thickness}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
+    // Left wall (along z axis)
+    drawWall(shader, {min - thickness, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
+    // Right wall
+    drawWall(shader, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
+}
+
+void handleCollision() {
+    float margin = 0.5f;
+    float min = -10.0f + margin;
+    float max = 10.0f - margin;
+
+    if (cameraPos.x < min) cameraPos.x = min;
+    if (cameraPos.x > max) cameraPos.x = max;
+    if (cameraPos.z < min) cameraPos.z = min;
+    if (cameraPos.z > max) cameraPos.z = max;
+}
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -212,6 +293,7 @@ int main() {
         lastFrame = current;
 
         handleKeyboardInput(window);
+        handleCollision();
 
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -224,6 +306,7 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader3D, "projection"), 1, GL_FALSE, &proj[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader3D, "model"), 1, GL_FALSE, &model[0][0]);
         drawGrid(shader3D);
+        drawWalls(shader3D);
 
         drawHUD(shaderHUD);
 
