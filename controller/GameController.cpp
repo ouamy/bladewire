@@ -50,6 +50,7 @@ bool GameController::initialize() {
     // audioManager->loadSound("jump", "sounds/jump.wav");
     audioManager->loadSound("shoot", "sounds/shoot.wav");
     audioManager->loadSound("reload", "sounds/reload.wav");
+    audioManager->loadSound("land", "sounds/land.wav");
     
     return true;
 }
@@ -105,6 +106,8 @@ void GameController::updateWalkingSound(GLFWwindow* window) {
 }
 
 void GameController::updatePhysics() {
+    bool wasOnGround = onGround;
+
     if (!onGround) {
         velocity.y += gravity * deltaTime;
         cameraPos.y += velocity.y * deltaTime;
@@ -113,6 +116,7 @@ void GameController::updatePhysics() {
             cameraPos.y = 1.0f;
             velocity.y = 0.0f;
             onGround = true;
+            audioManager->playSound("land");
         }
     }
 }

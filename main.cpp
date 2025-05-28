@@ -24,8 +24,8 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // screen dimensions
-    const unsigned int SCREEN_WIDTH = 1920;
-    const unsigned int SCREEN_HEIGHT = 1080;
+    const unsigned int SCREEN_WIDTH = 700;
+    const unsigned int SCREEN_HEIGHT = 700;
 
     // window creation
     GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "BladeWire", nullptr, nullptr);
