@@ -74,6 +74,7 @@ int main() {
 
         // update game logic
         controller->handleKeyboardInput(window);
+        controller->handleShooting(window);
         controller->updatePhysics();
         controller->handleCollision();
         controller->updateWalkingSound(window);

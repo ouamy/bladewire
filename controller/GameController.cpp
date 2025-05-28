@@ -22,7 +22,10 @@ GameController::GameController(unsigned int width, unsigned int height)
     , deltaTime(0.0f)
     , lastFrame(0.0f)
     , health(85)
-    , ammo(12)
+    , ammo(30)
+    , isShooting(false)
+    , shootCooldown(0.3f)
+    , lastShotTime(0.0f)
 {
     audioManager = std::make_shared<AudioManager>();
 }
@@ -45,7 +48,8 @@ bool GameController::initialize() {
     
     // load other sounds
     // audioManager->loadSound("jump", "sounds/jump.wav");
-    // audioManager->loadSound("shoot", "sounds/shoot.wav");
+    audioManager->loadSound("shoot", "sounds/shoot.wav");
+    audioManager->loadSound("reload", "sounds/reload.wav");
     
     return true;
 }
@@ -163,4 +167,27 @@ void GameController::updateDeltaTime() {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
+}
+
+void GameController::handleShooting(GLFWwindow* window) {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        float currentTime = glfwGetTime();
+        if (!isShooting && currentTime - lastShotTime >= shootCooldown && ammo > 0) {
+            isShooting = true;
+            lastShotTime = currentTime;
+            ammo--;
+            audioManager->playSound("shoot");
+        }
+    } else {
+        isShooting = false;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        reload();
+    }
+}
+
+void GameController::reload() {
+    ammo = 10;
+    audioManager->playSound("reload");
 }

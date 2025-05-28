@@ -23,6 +23,10 @@ private:
     const float jumpVelocity;
     
     bool isWalking;
+
+    bool isShooting;
+    float shootCooldown;
+    float lastShotTime;
     
     unsigned int screenWidth;
     unsigned int screenHeight;
@@ -46,6 +50,9 @@ public:
     void updatePhysics();
     
     void handleCollision();
+    
+    void handleShooting(GLFWwindow* window);
+    void reload();
     
     void onMouseMove(GLFWwindow* window, double xpos, double ypos);
     void onFramebufferResize(GLFWwindow* window, int width, int height);
