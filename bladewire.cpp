@@ -32,26 +32,29 @@ void onMouseMove(GLFWwindow* window, double xpos, double ypos) {
         lastX = (float)xpos;
         lastY = (float)ypos;
         firstMouse = false;
+        return;
     }
 
     float xoffset = (float)xpos - lastX;
-    float yoffset = lastY - (float)ypos;
+    float yoffset = lastY - (float)ypos; // reversed: y ranges bottom to top
+
     lastX = (float)xpos;
     lastY = (float)ypos;
 
-    float sensitivity = 1.0f / 45000.0f;
-    xoffset *= sensitivity * 180.0f;
-    yoffset *= sensitivity * 180.0f;
+    float sensitivity = 1.0f / 160.7f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
 
     yaw   += xoffset;
     pitch += yoffset;
+
     pitch = glm::clamp(pitch, -89.0f, 89.0f);
 
-    glm::vec3 dir;
-    dir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    dir.y = sin(glm::radians(pitch));
-    dir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(dir);
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
 }
 
 glm::vec3 velocity(0.0f);
