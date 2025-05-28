@@ -6,7 +6,10 @@ A First Person Shooter Game where only the most wired survives.
 sudo apt-get install libopenal-dev
 ```
 ```bash
-g++ bladewire.cpp glad/src/glad.cpp -Iglad/include -o bladewire -lglfw -ldl -lGL -lopenal -lX11 -lpthread -lXrandr -lXi
+g++ main.cpp controller/GameController.cpp view/Renderer.cpp model/AudioManager.cpp glad/src/glad.cpp \
+    -Iglad/include -Icontroller -Iview -Imodel \
+    -o bladewire \
+    -lglfw -ldl -lGL -lopenal -lX11 -lpthread -lXrandr -lXi
 ```
 
 ## Run
