@@ -52,15 +52,7 @@ int main() {
         return -1;
     }
 
-    // [ADDED: Initialize glText]
     renderer->initialiseGLText();
-
-    GLTtext* glTextLabel = gltCreateText();
-    GLTtext* glTextTimer = gltCreateText();
-    gltSetText(glTextLabel, "BladeWire");
-    char timeString[30];
-    int viewportWidth, viewportHeight;
-    //
 
     glfwSetWindowUserPointer(window, controller.get());
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -84,15 +76,13 @@ int main() {
 
         renderer->render();
 
-        // [ADDED: Draw glText]
-        renderer->drawBoth(window, viewportWidth, viewportHeight);
+        renderer->drawText(window);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // [ADDED: Clean glText]
-    renderer->cleanBoth(glTextLabel, glTextTimer);
+    renderer->cleanText();
 
     glfwTerminate();
     return 0;

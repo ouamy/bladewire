@@ -184,10 +184,6 @@ void Renderer::drawGrid() {
     }
 }
 
-void Renderer::drawText(const char* text) {
-
-}
-
 void Renderer::drawHUD() {
     glUseProgram(hudShader);
     glm::mat4 ortho = glm::ortho(0.0f, (float)screenWidth, 0.0f, (float)screenHeight);
@@ -201,8 +197,6 @@ void Renderer::drawHUD() {
 
     // time
     drawQuad(hudShader, { screenWidth / 2 - 50, screenHeight - 40 }, { 100, 25 }, { 0, 0, 1 });
-
-    drawText("hello from draw text");
 
     // teams
     for (int i = 0; i < 5; ++i) {
@@ -279,14 +273,16 @@ void Renderer::drawWalls() {
     drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
 }
 
-int Renderer::initialiseGLText(){
+void Renderer::initialiseGLText(){
     if (!gltInit()) {
         std::cerr << "Erreur: Impossible d'initialiser glText" << std::endl;
-        return -1;
     }
+    glTextLabel = gltCreateText();
+    glTextTimer = gltCreateText();
+    gltSetText(glTextLabel, "BladeWire");
 }
 
-void Renderer::drawBoth(window, viewportWidth, viewportHeight){
+void Renderer::drawText(GLFWwindow* window){
     glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight);
 
     gltBeginDraw();
@@ -309,7 +305,7 @@ void Renderer::drawBoth(window, viewportWidth, viewportHeight){
     gltEndDraw();
 }
 
-void Renderer::cleanBoth(glTextLabel, glTextTimer){
+void Renderer::cleanText(){
     gltDeleteText(glTextLabel);
     gltDeleteText(glTextTimer);
     gltTerminate();
