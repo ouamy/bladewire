@@ -184,6 +184,10 @@ void Renderer::drawGrid() {
     }
 }
 
+void Renderer::drawText(const char* text) {
+
+}
+
 void Renderer::drawHUD() {
     glUseProgram(hudShader);
     glm::mat4 ortho = glm::ortho(0.0f, (float)screenWidth, 0.0f, (float)screenHeight);
@@ -192,11 +196,15 @@ void Renderer::drawHUD() {
     // health bar
     drawQuad(hudShader, { 50, 50 }, { 200 * (controller->getHealth() / 100.0f), 25 }, { 1, 0, 0 });
     
-    // other
+    //ammo
     drawQuad(hudShader, { screenWidth - 150, 50 }, { 100, 25 }, { 1, 1, 1 });
-    drawQuad(hudShader, { screenWidth / 2 - 50, 50 }, { 100, 25 }, { 0, 0, 1 });
 
-    // ammo
+    // time
+    drawQuad(hudShader, { screenWidth / 2 - 50, screenHeight - 40 }, { 100, 25 }, { 0, 0, 1 });
+
+    drawText("hello from draw text");
+
+    // teams
     for (int i = 0; i < 5; ++i) {
         drawQuad(hudShader, { 400 + i * 60, screenHeight - 40 }, { 40, 20 }, { 1, 1, 1 });
         drawQuad(hudShader, { screenWidth - 700 + i * 60, screenHeight - 40 }, { 40, 20 }, { 1, 0, 0 });
@@ -269,4 +277,40 @@ void Renderer::drawWalls() {
     drawWall(shaderProgram, {min, 0.0f, min - thickness}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {min - thickness, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
+}
+
+int Renderer::initialiseGLText(){
+    if (!gltInit()) {
+        std::cerr << "Erreur: Impossible d'initialiser glText" << std::endl;
+        return -1;
+    }
+}
+
+void Renderer::drawBoth(window, viewportWidth, viewportHeight){
+    glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight);
+
+    gltBeginDraw();
+
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+    gltDrawText2D(glTextLabel, 20.0f, 20.0f, 1.0f);
+
+    double time = glfwGetTime();
+    sprintf(timeString, "Time: %.2f", time);
+    gltSetText(glTextTimer, timeString);
+
+    gltColor(
+        cosf((float)time) * 0.5f + 0.5f,
+        sinf((float)time) * 0.5f + 0.5f,
+        1.0f,
+        1.0f
+    );
+
+    gltDrawText2DAligned(glTextTimer, 0.0f, (GLfloat)viewportHeight, 1.0f, GLT_LEFT, GLT_BOTTOM);
+    gltEndDraw();
+}
+
+void Renderer::cleanBoth(glTextLabel, glTextTimer){
+    gltDeleteText(glTextLabel);
+    gltDeleteText(glTextTimer);
+    gltTerminate();
 }

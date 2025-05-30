@@ -6,6 +6,10 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include "../controller/game_controller.hpp"
+#include <cmath>        // [ADDED for cos/sin in gltext demo]
+#include <cstdio>       // [ADDED for sprintf in gltext demo]
+#define GLT_IMPLEMENTATION // [ADDED: Only once in the entire project]
+#include "gltext.hpp"      // [ADDED: glText header]
 
 class Renderer {
 private:
@@ -34,10 +38,18 @@ public:
     void render();
     
     void drawGrid();
+
+    void drawText(const char* text);
     
     void drawHUD();
     
     void drawWalls();
+
+    int initialiseGLText();
+
+    void drawBoth(window, viewportWidth, viewportHeight);
+
+    void cleanBoth(glTextLabel, glTextTimer);
 };
 
 #endif // RENDERER_HPP

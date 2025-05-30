@@ -2,11 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <memory>
-#include <cmath>        // [ADDED for cos/sin in gltext demo]
-#include <cstdio>       // [ADDED for sprintf in gltext demo]
-
-#define GLT_IMPLEMENTATION // [ADDED: Only once in the entire project]
-#include "view/gltext.hpp"      // [ADDED: glText header]
 
 #include "controller/game_controller.hpp"
 #include "view/renderer.hpp"
@@ -45,20 +40,6 @@ int main() {
         return -1;
     }
 
-    // [ADDED: Initialize glText]
-    if (!gltInit()) {
-        std::cerr << "Erreur: Impossible d'initialiser glText" << std::endl;
-        return -1;
-    }
-
-    // [ADDED: Create glText objects]
-    GLTtext* glTextLabel = gltCreateText();
-    GLTtext* glTextTimer = gltCreateText();
-    gltSetText(glTextLabel, "BladeWire");
-
-    int viewportWidth, viewportHeight;
-    char timeString[30];
-
     auto controller = std::make_shared<GameController>(SCREEN_WIDTH, SCREEN_HEIGHT);
     if (!controller->initialize()) {
         std::cerr << "Erreur: Impossible d'initialiser le contrôleur" << std::endl;
@@ -70,6 +51,16 @@ int main() {
         std::cerr << "Erreur: Impossible d'initialiser le renderer" << std::endl;
         return -1;
     }
+
+    // [ADDED: Initialize glText]
+    renderer->initialiseGLText();
+
+    GLTtext* glTextLabel = gltCreateText();
+    GLTtext* glTextTimer = gltCreateText();
+    gltSetText(glTextLabel, "BladeWire");
+    char timeString[30];
+    int viewportWidth, viewportHeight;
+    //
 
     glfwSetWindowUserPointer(window, controller.get());
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -93,38 +84,15 @@ int main() {
 
         renderer->render();
 
-        // [ADDED: Get framebuffer size for glText placement]
-        glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight);
-
-        // [ADDED: Prepare glText for drawing]
-        gltBeginDraw();
-
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gltDrawText2D(glTextLabel, 20.0f, 20.0f, 1.0f);
-
-        double time = glfwGetTime();
-        sprintf(timeString, "Time: %.2f", time);
-        gltSetText(glTextTimer, timeString);
-
-        gltColor(
-            cosf((float)time) * 0.5f + 0.5f,
-            sinf((float)time) * 0.5f + 0.5f,
-            1.0f,
-            1.0f
-        );
-
-        gltDrawText2DAligned(glTextTimer, 0.0f, (GLfloat)viewportHeight, 1.0f, GLT_LEFT, GLT_BOTTOM);
-        gltEndDraw();
-        // [END ADDED]
+        // [ADDED: Draw glText]
+        renderer->drawBoth(window, viewportWidth, viewportHeight);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // [ADDED: Cleanup glText]
-    gltDeleteText(glTextLabel);
-    gltDeleteText(glTextTimer);
-    gltTerminate();
+    // [ADDED: Clean glText]
+    renderer->cleanBoth(glTextLabel, glTextTimer);
 
     glfwTerminate();
     return 0;
