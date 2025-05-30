@@ -1,4 +1,4 @@
-#include "GameController.hpp"
+#include "game_controller.hpp"
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 

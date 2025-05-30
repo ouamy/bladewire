@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <memory>
-#include "../controller/GameController.hpp"
+#include "../controller/game_controller.hpp"
 
 class Renderer {
 private:

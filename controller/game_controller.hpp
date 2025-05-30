@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <memory>
-#include "../model/AudioManager.hpp"
+#include "../model/audio_manager.hpp"
 
 class GameController {
 private:
