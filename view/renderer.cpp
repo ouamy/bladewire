@@ -51,7 +51,9 @@ bool Renderer::initialize() {
         std::cerr << "Erreur: Impossible de créer les programmes de shader" << std::endl;
         return false;
     }
-    
+
+    model = std::make_unique<Model>("view/skins/yahya.fbx");
+
     return true;
 }
 
@@ -110,13 +112,18 @@ void Renderer::render(GLFWwindow* window) {
     );
     
     glUseProgram(shaderProgram);
-    
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &glm::mat4(1.0f)[0][0]);
     
+    glm::mat4 characterModelMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &characterModelMat[0][0]);
+    model->draw(shaderProgram); // Draw character scaled down
+    
+    glm::mat4 platformModelMat = glm::mat4(1.0f); // No scaling for platform/grid
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &platformModelMat[0][0]);
     drawGrid();
     drawWalls();
+
     drawHUD(window);
 }
 
@@ -191,12 +198,6 @@ void Renderer::drawHUD(GLFWwindow* window) {
 
     // health bar
     drawQuad(hudShader, { 50, 50 }, { 200 * (controller->getHealth() / 100.0f), 25 }, { 1, 0, 0 });
-    
-    //ammo
-    //drawQuad(hudShader, { screenWidth - 150, 50 }, { 100, 25 }, { 1, 1, 1 });
-
-    // timer
-    //drawQuad(hudShader, { screenWidth / 2 - 50, screenHeight - 40 }, { 100, 25 }, { 0, 0, 1 });
 
     // teams
     for (int i = 0; i < 5; ++i) {
@@ -214,10 +215,6 @@ void Renderer::drawHUD(GLFWwindow* window) {
     drawQuad(hudShader, { cx - thickness / 2, cy - length }, { thickness, 2 * length }, { 1, 0, 0 });
     drawText(window);
 }
-
-// Add this to Renderer.hpp or Renderer class:
-// double countdownStartTime = 0.0;
-// const double countdownDuration = 100.0; // 100 seconds countdown
 
 void Renderer::initialiseGLText(){
     if (!gltInit()) {

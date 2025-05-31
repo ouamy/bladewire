@@ -10,6 +10,7 @@
 #include <cstdio>       // sprintf in gltext demo
 #define GLT_IMPLEMENTATION // only once in the entire project
 #include "gltext.hpp"
+#include "model.hpp"
 
 class Renderer {
 private:
@@ -21,6 +22,8 @@ private:
     //
     GLTtext* glTextLabel;
     GLTtext* glTextTimer;
+
+    std::unique_ptr<Model> model;
 
     double countdownStartTime = 0.0;
     const double countdownDuration = 100.0; // 100 seconds countdown
