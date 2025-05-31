@@ -38,10 +38,7 @@ Renderer::Renderer(unsigned int width, unsigned int height, std::shared_ptr<Game
 {
 }
 
-Renderer::~Renderer() {
-    glDeleteProgram(shaderProgram);
-    glDeleteProgram(hudShader);
-}
+Renderer::~Renderer() {}
 
 bool Renderer::initialize() {
     shaderProgram = createShaderProgram(vertexShaderSrc, fragmentShaderSrc);
