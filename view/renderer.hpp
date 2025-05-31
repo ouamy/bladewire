@@ -21,6 +21,9 @@ private:
     //
     GLTtext* glTextLabel;
     GLTtext* glTextTimer;
+
+    double countdownStartTime = 0.0;
+    const double countdownDuration = 100.0; // 100 seconds countdown
     
     unsigned int screenWidth;
     unsigned int screenHeight;
@@ -43,11 +46,11 @@ public:
     
     bool initialize();
     
-    void render();
+    void render(GLFWwindow* window);
     
     void drawGrid();
     
-    void drawHUD();
+    void drawHUD(GLFWwindow* window);
     
     void drawWalls();
 

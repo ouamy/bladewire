@@ -22,7 +22,8 @@ GameController::GameController(unsigned int width, unsigned int height)
     , deltaTime(0.0f)
     , lastFrame(0.0f)
     , health(85)
-    , ammo(30)
+    , ammo(15)
+    , reserveAmmo(30)
     , isShooting(false)
     , shootCooldown(0.3f)
     , lastShotTime(0.0f)
@@ -192,6 +193,13 @@ void GameController::handleShooting(GLFWwindow* window) {
 }
 
 void GameController::reload() {
-    ammo = 10;
+    if (reserveAmmo <= 0 || ammo == 15) return;
+
+    int needed = 15 - ammo;
+    int toReload = (reserveAmmo >= needed) ? needed : reserveAmmo;
+
+    ammo += toReload;
+    reserveAmmo -= toReload;
+
     audioManager->playSound("reload");
 }

@@ -74,9 +74,7 @@ int main() {
         controller->handleCollision();
         controller->updateWalkingSound(window);
 
-        renderer->render();
-
-        renderer->drawText(window);
+        renderer->render(window);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

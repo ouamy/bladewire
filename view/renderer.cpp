@@ -92,7 +92,7 @@ GLuint Renderer::createShaderProgram(const char* vertexSrc, const char* fragSrc)
     return program;
 }
 
-void Renderer::render() {
+void Renderer::render(GLFWwindow* window) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -117,7 +117,7 @@ void Renderer::render() {
     
     drawGrid();
     drawWalls();
-    drawHUD();
+    drawHUD(window);
 }
 
 void Renderer::drawLine(GLuint shader, glm::vec3 start, glm::vec3 end, glm::vec3 color) {
@@ -184,7 +184,7 @@ void Renderer::drawGrid() {
     }
 }
 
-void Renderer::drawHUD() {
+void Renderer::drawHUD(GLFWwindow* window) {
     glUseProgram(hudShader);
     glm::mat4 ortho = glm::ortho(0.0f, (float)screenWidth, 0.0f, (float)screenHeight);
     glUniformMatrix4fv(glGetUniformLocation(hudShader, "projection"), 1, GL_FALSE, &ortho[0][0]);
@@ -193,10 +193,10 @@ void Renderer::drawHUD() {
     drawQuad(hudShader, { 50, 50 }, { 200 * (controller->getHealth() / 100.0f), 25 }, { 1, 0, 0 });
     
     //ammo
-    drawQuad(hudShader, { screenWidth - 150, 50 }, { 100, 25 }, { 1, 1, 1 });
+    //drawQuad(hudShader, { screenWidth - 150, 50 }, { 100, 25 }, { 1, 1, 1 });
 
-    // time
-    drawQuad(hudShader, { screenWidth / 2 - 50, screenHeight - 40 }, { 100, 25 }, { 0, 0, 1 });
+    // timer
+    //drawQuad(hudShader, { screenWidth / 2 - 50, screenHeight - 40 }, { 100, 25 }, { 0, 0, 1 });
 
     // teams
     for (int i = 0; i < 5; ++i) {
@@ -212,6 +212,86 @@ void Renderer::drawHUD() {
 
     drawQuad(hudShader, { cx - length, cy - thickness / 2 }, { 2 * length, thickness }, { 1, 0, 0 });
     drawQuad(hudShader, { cx - thickness / 2, cy - length }, { thickness, 2 * length }, { 1, 0, 0 });
+    drawText(window);
+}
+
+// Add this to Renderer.hpp or Renderer class:
+// double countdownStartTime = 0.0;
+// const double countdownDuration = 100.0; // 100 seconds countdown
+
+void Renderer::initialiseGLText(){
+    if (!gltInit()) {
+        std::cerr << "Erreur: Impossible d'initialiser glText" << std::endl;
+    }
+    glTextLabel = gltCreateText();
+    glTextTimer = gltCreateText();
+    countdownStartTime = glfwGetTime();
+}
+
+void Renderer::drawText(GLFWwindow* window) {
+    glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight);
+
+    constexpr float TIMER_OFFSET_Y = 30.0f;
+    constexpr float TIMER_SIZE = 5.0f;
+
+    constexpr float AMMO_OFFSET_X = 30.0f;
+    constexpr float AMMO_OFFSET_Y = 30.0f;
+    constexpr float AMMO_SIZE = 5.0f;
+
+    gltBeginDraw();
+
+    double currentTime = glfwGetTime();
+    double elapsedTime = currentTime - countdownStartTime;
+    double remainingTime = countdownDuration - elapsedTime;
+    if (remainingTime < 0) remainingTime = 0;
+
+    int minutes = static_cast<int>(remainingTime) / 60;
+    int seconds = static_cast<int>(remainingTime) % 60;
+
+    sprintf(timeString, "Time: %02d:%02d", minutes, seconds);
+    gltSetText(glTextTimer, timeString);
+
+    gltColor(
+        cosf((float)currentTime) * 0.5f + 0.5f,
+        sinf((float)currentTime) * 0.5f + 0.5f,
+        1.0f,
+        1.0f
+    );
+
+    gltDrawText2DAligned(
+        glTextTimer,
+        viewportWidth / 2.0f,
+        TIMER_OFFSET_Y,
+        TIMER_SIZE,
+        GLT_CENTER,
+        GLT_TOP
+    );
+
+    int ammo = controller->getAmmo();
+    int reserve = controller->getReserveAmmo();
+
+    char ammoString[32];
+    sprintf(ammoString, "Ammo: %d/%d", ammo, reserve);
+    gltSetText(glTextLabel, ammoString);
+
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    gltDrawText2DAligned(
+        glTextLabel,
+        viewportWidth - AMMO_OFFSET_X,
+        viewportHeight - AMMO_OFFSET_Y,
+        AMMO_SIZE,
+        GLT_RIGHT,
+        GLT_BOTTOM
+    );
+
+    gltEndDraw();
+}
+
+void Renderer::cleanText(){
+    gltDeleteText(glTextLabel);
+    gltDeleteText(glTextTimer);
+    gltTerminate();
 }
 
 void Renderer::drawWall(GLuint shader, glm::vec3 pos, glm::vec3 size, glm::vec3 color) {
@@ -271,42 +351,4 @@ void Renderer::drawWalls() {
     drawWall(shaderProgram, {min, 0.0f, min - thickness}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {min - thickness, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
-}
-
-void Renderer::initialiseGLText(){
-    if (!gltInit()) {
-        std::cerr << "Erreur: Impossible d'initialiser glText" << std::endl;
-    }
-    glTextLabel = gltCreateText();
-    glTextTimer = gltCreateText();
-    gltSetText(glTextLabel, "BladeWire");
-}
-
-void Renderer::drawText(GLFWwindow* window){
-    glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight);
-
-    gltBeginDraw();
-
-    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-    gltDrawText2D(glTextLabel, 20.0f, 20.0f, 1.0f);
-
-    double time = glfwGetTime();
-    sprintf(timeString, "Time: %.2f", time);
-    gltSetText(glTextTimer, timeString);
-
-    gltColor(
-        cosf((float)time) * 0.5f + 0.5f,
-        sinf((float)time) * 0.5f + 0.5f,
-        1.0f,
-        1.0f
-    );
-
-    gltDrawText2DAligned(glTextTimer, 0.0f, (GLfloat)viewportHeight, 1.0f, GLT_LEFT, GLT_BOTTOM);
-    gltEndDraw();
-}
-
-void Renderer::cleanText(){
-    gltDeleteText(glTextLabel);
-    gltDeleteText(glTextTimer);
-    gltTerminate();
 }

@@ -36,6 +36,7 @@ private:
     
     int health;
     int ammo;
+    int reserveAmmo;
 
 public:
     GameController(unsigned int width, unsigned int height);
@@ -67,6 +68,8 @@ public:
     
     int getHealth() const { return health; }
     int getAmmo() const { return ammo; }
+    int getReserveAmmo() const { return reserveAmmo; }
+
     
     std::shared_ptr<AudioManager> getAudioManager() { return audioManager; }
 };
