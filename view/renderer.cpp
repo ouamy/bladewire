@@ -112,7 +112,10 @@ void Renderer::render(GLFWwindow* window) {
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
     
-    glm::mat4 characterModelMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
+    glm::mat4 characterModelMat = glm::mat4(1.0f);
+    characterModelMat = glm::rotate(characterModelMat, glm::radians(-90.0f), glm::vec3(1, 0, 0)); // Rotate upright
+    characterModelMat = glm::scale(characterModelMat, glm::vec3(0.007f)); // Scale down after rotation
+
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &characterModelMat[0][0]);
     model->draw(shaderProgram); // Draw character scaled down
     
@@ -362,5 +365,6 @@ void Renderer::drawWalls() {
     drawWall(shaderProgram, {min, 0.0f, max}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {min, 0.0f, min - thickness}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {min - thickness, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
-    drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
+    //draws black wall and black model
+    drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {0.0f, 0.0f, 0.0f});
 }
