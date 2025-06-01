@@ -44,6 +44,8 @@ public:
     bool setPitch(const std::string& name, float pitch);
     
     bool setVolume(const std::string& name, float volume);
+
+    float getSoundDuration(const std::string& soundName);
     
     void cleanup();
 };

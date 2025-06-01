@@ -27,6 +27,9 @@ GameController::GameController(unsigned int width, unsigned int height)
     , isShooting(false)
     , shootCooldown(0.3f)
     , lastShotTime(0.0f)
+    , isReloading(false)
+    , reloadEndTime(0.0f)
+    , ammoToAddAfterReload(0)
 {
     audioManager = std::make_shared<AudioManager>();
 }
@@ -175,6 +178,10 @@ void GameController::updateDeltaTime() {
 }
 
 void GameController::handleShooting(GLFWwindow* window) {
+    updateReloading();
+
+    if (isReloading) return;
+
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         float currentTime = glfwGetTime();
         if (!isShooting && currentTime - lastShotTime >= shootCooldown && ammo > 0) {
@@ -193,13 +200,23 @@ void GameController::handleShooting(GLFWwindow* window) {
 }
 
 void GameController::reload() {
-    if (reserveAmmo <= 0 || ammo == 15) return;
+    if (isReloading || reserveAmmo <= 0 || ammo == 15) return;
 
     int needed = 15 - ammo;
-    int toReload = (reserveAmmo >= needed) ? needed : reserveAmmo;
+    int toReload = std::min(needed, reserveAmmo);
 
-    ammo += toReload;
-    reserveAmmo -= toReload;
-
+    isReloading = true;
+    reloadEndTime = glfwGetTime() + audioManager->getSoundDuration("reload");
     audioManager->playSound("reload");
+
+    ammoToAddAfterReload = toReload;
+}
+
+void GameController::updateReloading() {
+    if (isReloading && glfwGetTime() >= reloadEndTime) {
+        ammo += ammoToAddAfterReload;
+        reserveAmmo -= ammoToAddAfterReload;
+        ammoToAddAfterReload = 0;
+        isReloading = false;
+    }
 }

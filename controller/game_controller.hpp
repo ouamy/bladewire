@@ -27,6 +27,9 @@ private:
     bool isShooting;
     float shootCooldown;
     float lastShotTime;
+    bool isReloading;
+    int ammoToAddAfterReload;
+    float reloadEndTime;
     
     unsigned int screenWidth;
     unsigned int screenHeight;
@@ -69,6 +72,8 @@ public:
     int getHealth() const { return health; }
     int getAmmo() const { return ammo; }
     int getReserveAmmo() const { return reserveAmmo; }
+
+    void updateReloading();
 
     
     std::shared_ptr<AudioManager> getAudioManager() { return audioManager; }

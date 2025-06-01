@@ -240,7 +240,7 @@ void Renderer::drawText(GLFWwindow* window) {
     int minutes = static_cast<int>(remainingTime) / 60;
     int seconds = static_cast<int>(remainingTime) % 60;
 
-    sprintf(timeString, "Time: %02d:%02d", minutes, seconds);
+    sprintf(timeString, "%02d:%02d", minutes, seconds);
     gltSetText(glTextTimer, timeString);
 
     gltColor(
@@ -263,7 +263,8 @@ void Renderer::drawText(GLFWwindow* window) {
     int reserve = controller->getReserveAmmo();
 
     char ammoString[32];
-    sprintf(ammoString, "Ammo: %d/%d", ammo, reserve);
+    // ammo
+    sprintf(ammoString, "%d/%d", ammo, reserve);
     gltSetText(glTextLabel, ammoString);
 
     gltColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -277,7 +278,8 @@ void Renderer::drawText(GLFWwindow* window) {
         GLT_BOTTOM
     );
 
-    std::string healthStr = "Health: " + std::to_string(controller->getHealth());
+    // health
+    std::string healthStr = "" + std::to_string(controller->getHealth());
 
     gltSetText(healthText.get(), healthStr.c_str());
 
