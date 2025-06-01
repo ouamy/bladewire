@@ -23,6 +23,8 @@ private:
     GLTtext* glTextLabel;
     GLTtext* glTextTimer;
 
+    std::unique_ptr<GLTtext> healthText;
+
     std::unique_ptr<Model> model;
 
     double countdownStartTime = 0.0;

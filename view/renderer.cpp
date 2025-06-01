@@ -193,9 +193,6 @@ void Renderer::drawHUD(GLFWwindow* window) {
     glm::mat4 ortho = glm::ortho(0.0f, (float)screenWidth, 0.0f, (float)screenHeight);
     glUniformMatrix4fv(glGetUniformLocation(hudShader, "projection"), 1, GL_FALSE, &ortho[0][0]);
 
-    // health bar
-    drawQuad(hudShader, { 50, 50 }, { 200 * (controller->getHealth() / 100.0f), 25 }, { 1, 0, 0 });
-
     // teams
     for (int i = 0; i < 5; ++i) {
         drawQuad(hudShader, { 400 + i * 60, screenHeight - 40 }, { 40, 20 }, { 1, 1, 1 });
@@ -220,6 +217,7 @@ void Renderer::initialiseGLText(){
     glTextLabel = gltCreateText();
     glTextTimer = gltCreateText();
     countdownStartTime = glfwGetTime();
+    healthText.reset(gltCreateText());
 }
 
 void Renderer::drawText(GLFWwindow* window) {
@@ -279,12 +277,31 @@ void Renderer::drawText(GLFWwindow* window) {
         GLT_BOTTOM
     );
 
-    gltEndDraw();
+    std::string healthStr = "Health: " + std::to_string(controller->getHealth());
+
+    gltSetText(healthText.get(), healthStr.c_str());
+
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f); // White color
+
+    constexpr float HEALTH_X = 1875.0f;
+    constexpr float HEALTH_Y = 30.0f;
+    constexpr float HEALTH_SIZE = 5.0f;
+
+    gltDrawText2DAligned(
+        healthText.get(),
+        viewportWidth - HEALTH_X,
+        viewportHeight - HEALTH_Y,
+        HEALTH_SIZE,
+        GLT_LEFT,
+        GLT_BOTTOM
+    );
+
 }
 
 void Renderer::cleanText(){
     gltDeleteText(glTextLabel);
     gltDeleteText(glTextTimer);
+    gltDeleteText(healthText.get());
     gltTerminate();
 }
 
