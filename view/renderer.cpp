@@ -301,7 +301,6 @@ void Renderer::drawText(GLFWwindow* window) {
 void Renderer::cleanText(){
     gltDeleteText(glTextLabel);
     gltDeleteText(glTextTimer);
-    gltDeleteText(healthText.get());
     gltTerminate();
 }
 
