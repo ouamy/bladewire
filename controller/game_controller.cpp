@@ -25,7 +25,7 @@ GameController::GameController(unsigned int width, unsigned int height)
     , ammo(15)
     , reserveAmmo(30)
     , isShooting(false)
-    , shootCooldown(0.3f)
+    , shootCooldown(0.8f)
     , lastShotTime(0.0f)
     , isReloading(false)
     , reloadEndTime(0.0f)
@@ -195,6 +195,10 @@ void GameController::handleShooting(GLFWwindow* window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        reload();
+    }
+
+    if (ammo == 0 && reserveAmmo > 0) {
         reload();
     }
 }

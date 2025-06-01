@@ -239,6 +239,6 @@ void AudioManager::cleanup() {
 }
 
 float AudioManager::getSoundDuration(const std::string& soundName) {
-    if (soundName == "reload") return 3.0f;
+    if (soundName == "reload") return 2.8f;
     return 0.0f;
 }
