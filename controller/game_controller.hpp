@@ -66,6 +66,8 @@ public:
     const glm::vec3& getCameraUp() const { return cameraUp; }
     
     float getDeltaTime() const { return deltaTime; }
+    float getYaw() const { return yaw; }
+    float getPitch() const { return pitch; }
     
     void updateDeltaTime();
     

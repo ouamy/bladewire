@@ -69,7 +69,12 @@ void GameController::handleKeyboardInput(GLFWwindow* window) {
     }
 
     glm::vec3 flatFront = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
-    glm::vec3 right = glm::normalize(glm::cross(flatFront, cameraUp));
+    glm::vec3 forward = glm::normalize(glm::vec3(
+    cos(glm::radians(yaw)),
+    0.0f,
+    sin(glm::radians(yaw))
+    ));
+    glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) cameraPos += flatFront * speed;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cameraPos -= flatFront * speed;
