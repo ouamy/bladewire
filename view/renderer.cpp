@@ -121,7 +121,8 @@ void Renderer::render(GLFWwindow* window) {
     float yawCorrection = 270.0f;
     characterModelMat = glm::rotate(characterModelMat, glm::radians(controller->getYaw()+yawCorrection), glm::vec3(0, 1, 0));
     characterModelMat = glm::rotate(characterModelMat, glm::radians(-90.0f), glm::vec3(1, 0, 0));
-    characterModelMat = glm::scale(characterModelMat, glm::vec3(0.007f));
+    //characterModelMat = glm::scale(characterModelMat, glm::vec3(0.007f));
+    characterModelMat = glm::scale(characterModelMat, glm::vec3(0.5f));
 
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &characterModelMat[0][0]);
     model->draw(shaderProgram); // Draw character scaled down
