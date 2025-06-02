@@ -49,7 +49,7 @@ bool Renderer::initialize() {
         return false;
     }
 
-    model = std::make_unique<Model>("view/skins/yahya.fbx");
+    model = std::make_unique<Model>("view/skins/men/yahya/everyday/yahya_everyday.fbx");
 
     return true;
 }
