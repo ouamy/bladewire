@@ -5,10 +5,16 @@
 const char* vertexShaderSrc = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
+out vec2 TexCoords;
+
 void main() {
+    TexCoords = aTexCoords;
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
 )";
@@ -16,7 +22,9 @@ void main() {
 const char* hudVertexShaderSrc = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
+
 uniform mat4 projection;
+
 void main() {
     gl_Position = projection * vec4(aPos, 1.0);
 }
@@ -24,10 +32,18 @@ void main() {
 
 const char* fragmentShaderSrc = R"(
 #version 330 core
+in vec2 TexCoords;
 out vec4 FragColor;
+
+uniform sampler2D diffuseTexture;
 uniform vec3 color;
+uniform bool useTexture;
+
 void main() {
-    FragColor = vec4(color, 1.0);
+    if (useTexture)
+        FragColor = texture(diffuseTexture, TexCoords);
+    else
+        FragColor = vec4(color, 1.0);
 }
 )";
 
@@ -125,13 +141,31 @@ void Renderer::render(GLFWwindow* window) {
     characterModelMat = glm::scale(characterModelMat, glm::vec3(0.5f));
 
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &characterModelMat[0][0]);
-    model->draw(shaderProgram); // Draw character scaled down
+
+
+
+
+    glUseProgram(shaderProgram);
+    glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), true);
+    glUniform1i(glGetUniformLocation(shaderProgram, "diffuseTexture"), 0); // si texture active sur GL_TEXTURE0
+    model->draw(shaderProgram);// Draw character scaled down
     
+
+
     glm::mat4 platformModelMat = glm::mat4(1.0f); // No scaling for platform/grid
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &platformModelMat[0][0]);
+
+
+    glUseProgram(shaderProgram);
+    glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), false);
+    glUniform3f(glGetUniformLocation(shaderProgram, "color"), 1.0f, 1.0f, 1.0f);
+    drawGrid();
+
+
     drawGrid();
     drawWalls();
 
+    // This is the color my model takes atm and I have no idea why I just "reset it"
     GLint colorLoc = glGetUniformLocation(shaderProgram, "color");
     glUseProgram(shaderProgram);
     glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
