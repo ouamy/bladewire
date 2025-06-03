@@ -132,6 +132,10 @@ void Renderer::render(GLFWwindow* window) {
     drawGrid();
     drawWalls();
 
+    GLint colorLoc = glGetUniformLocation(shaderProgram, "color");
+    glUseProgram(shaderProgram);
+    glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
+
     drawHUD(window);
 }
 
@@ -373,6 +377,5 @@ void Renderer::drawWalls() {
     drawWall(shaderProgram, {min, 0.0f, max}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {min, 0.0f, min - thickness}, {max - min + thickness, height, thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {min - thickness, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
-    //draws black wall and black model
-    drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {0.0f, 0.0f, 0.0f});
+    drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
 }
