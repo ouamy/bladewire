@@ -132,11 +132,11 @@ void Renderer::render(GLFWwindow* window) {
     glm::mat4 characterModelMat = glm::mat4(1.0f);
 
     glm::vec3 playerPos = controller->getCameraPos();
-    glm::vec3 offset(0.0f, -1.2f, 0.2f); // vers le bas et légèrement vers l’arrière
+    glm::vec3 offset(0.0f, -1.2f, 2.0f); // vers le bas et légèrement vers l’arrière
     characterModelMat = glm::translate(glm::mat4(1.0f), playerPos + offset);
     
-    float yawCorrection = 270.0f;
-    characterModelMat = glm::rotate(characterModelMat, glm::radians(controller->getYaw()+yawCorrection), glm::vec3(0, 1, 0));
+    float yawCorrection = 90.0f;
+    characterModelMat = glm::rotate(characterModelMat, glm::radians(-controller->getYaw() + yawCorrection), glm::vec3(0, 1, 0));
     characterModelMat = glm::rotate(characterModelMat, glm::radians(-90.0f), glm::vec3(1, 0, 0));
     characterModelMat = glm::scale(characterModelMat, glm::vec3(0.5f)); // scale
 
