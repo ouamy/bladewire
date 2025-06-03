@@ -6,7 +6,6 @@
 #include "controller/game_controller.hpp"
 #include "view/renderer.hpp"
 
-// callbacks GLFW
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     auto* controller = static_cast<GameController*>(glfwGetWindowUserPointer(window));
     controller->onFramebufferResize(window, width, height);
@@ -18,7 +17,6 @@ void mouseMoveCallback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 int main() {
-    // initialisation GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);

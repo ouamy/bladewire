@@ -5,7 +5,8 @@
 const char* vertexShaderSrc = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoords;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoords;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -137,38 +138,24 @@ void Renderer::render(GLFWwindow* window) {
     float yawCorrection = 270.0f;
     characterModelMat = glm::rotate(characterModelMat, glm::radians(controller->getYaw()+yawCorrection), glm::vec3(0, 1, 0));
     characterModelMat = glm::rotate(characterModelMat, glm::radians(-90.0f), glm::vec3(1, 0, 0));
-    //characterModelMat = glm::scale(characterModelMat, glm::vec3(0.007f));
-    characterModelMat = glm::scale(characterModelMat, glm::vec3(0.5f));
+    characterModelMat = glm::scale(characterModelMat, glm::vec3(0.5f)); // scale
 
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &characterModelMat[0][0]);
 
-
-
-
     glUseProgram(shaderProgram);
     glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), true);
-    glUniform1i(glGetUniformLocation(shaderProgram, "diffuseTexture"), 0); // si texture active sur GL_TEXTURE0
-    model->draw(shaderProgram);// Draw character scaled down
+    glUniform1i(glGetUniformLocation(shaderProgram, "diffuseTexture"), 0);
+    model->draw(shaderProgram);
     
-
-
-    glm::mat4 platformModelMat = glm::mat4(1.0f); // No scaling for platform/grid
+    glm::mat4 platformModelMat = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &platformModelMat[0][0]);
-
 
     glUseProgram(shaderProgram);
     glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), false);
     glUniform3f(glGetUniformLocation(shaderProgram, "color"), 1.0f, 1.0f, 1.0f);
-    drawGrid();
-
 
     drawGrid();
     drawWalls();
-
-    // This is the color my model takes atm and I have no idea why I just "reset it"
-    GLint colorLoc = glGetUniformLocation(shaderProgram, "color");
-    glUseProgram(shaderProgram);
-    glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
 
     drawHUD(window);
 }
@@ -328,7 +315,7 @@ void Renderer::drawText(GLFWwindow* window) {
     );
 
     // health
-    std::string healthStr = "" + std::to_string(controller->getHealth());
+    std::string healthStr = std::to_string(controller->getHealth());
 
     gltSetText(healthText.get(), healthStr.c_str());
 

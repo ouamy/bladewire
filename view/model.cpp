@@ -1,5 +1,6 @@
 #include "model.hpp"
 #include <iostream>
+#include <filesystem>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.hpp"
 
@@ -23,15 +24,12 @@ void Mesh::setupMesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& i
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    // position
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
     glEnableVertexAttribArray(0);
 
-    // normal
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
     glEnableVertexAttribArray(1);
 
-    // texCoords
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
     glEnableVertexAttribArray(2);
 
@@ -175,11 +173,30 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 
         if (!skip) {
             Texture texture;
-            std::string filename = std::string(str.C_Str());
-            filename = directory + "/shelby.png";
-            texture.id = TextureFromFile(filename.c_str());
+
+            std::string textureRelativePath = std::string(str.C_Str());
+
+            std::filesystem::path candidate1 = std::filesystem::path(directory) / textureRelativePath;
+            std::filesystem::path candidate2 = std::filesystem::path(directory) / std::filesystem::path(textureRelativePath).filename();
+
+            std::filesystem::path finalPath;
+            if (std::filesystem::exists(candidate1)) {
+                finalPath = candidate1;
+            } else if (std::filesystem::exists(candidate2)) {
+                finalPath = candidate2;
+            } else {
+                std::cerr << "Texture file not found at: " << candidate1 << " or " << candidate2 << std::endl;
+                return textures;
+            }
+
+            std::filesystem::path fullPath = std::filesystem::path(directory) / textureRelativePath;
+            fullPath = fullPath.lexically_normal();
+            std::string filename = fullPath.string();
+
+
+            texture.id = TextureFromFile(finalPath.string().c_str());
             texture.type = typeName;
-            texture.path = filename;
+            texture.path = finalPath.string();
             textures.push_back(texture);
             textures_loaded.push_back(texture);
         }

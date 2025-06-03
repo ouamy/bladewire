@@ -3,15 +3,11 @@
 #include <fstream>
 #include <cstring>
 
-AudioManager::AudioManager() : device(nullptr), context(nullptr), initialized(false) {
-}
+AudioManager::AudioManager() : device(nullptr), context(nullptr), initialized(false) {}
 
-AudioManager::~AudioManager() {
-    cleanup();
-}
+AudioManager::~AudioManager() {cleanup();}
 
 bool AudioManager::initialize() {
-    // OpenAL initialisation
     device = alcOpenDevice(nullptr);
     if (!device) {
         std::cerr << "Erreur: Impossible d'ouvrir le périphérique audio" << std::endl;
@@ -102,9 +98,7 @@ bool AudioManager::loadSound(const std::string& name, const std::string& filePat
         return false;
     }
 
-    // check if sound already exists
     if (buffers.find(name) != buffers.end()) {
-        // sound already loaded
         return true;
     }
 

@@ -6,9 +6,9 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include "../controller/game_controller.hpp"
-#include <cmath>        // cos/sin in gltext demo
-#include <cstdio>       // sprintf in gltext demo
-#define GLT_IMPLEMENTATION // only once in the entire project
+#include <cmath>
+#include <cstdio>
+#define GLT_IMPLEMENTATION
 #include "gltext.hpp"
 #include "model.hpp"
 

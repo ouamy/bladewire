@@ -34,12 +34,9 @@ GameController::GameController(unsigned int width, unsigned int height)
     audioManager = std::make_shared<AudioManager>();
 }
 
-GameController::~GameController() {
-    // AudioManager's cleaning handled by destructor
-}
+GameController::~GameController() {}
 
 bool GameController::initialize() {
-    // audio system initialisation
     if (!audioManager->initialize()) {
         std::cerr << "Erreur: Impossible d'initialiser l'audio" << std::endl;
         return false;
@@ -50,7 +47,7 @@ bool GameController::initialize() {
         return false;
     }
     
-    // load other sounds
+    // can load other sounds
     // audioManager->loadSound("jump", "sounds/jump.wav");
     audioManager->loadSound("shoot", "sounds/shoot.wav");
     audioManager->loadSound("reload", "sounds/reload.wav");
