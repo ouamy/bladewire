@@ -42,16 +42,16 @@ bool GameController::initialize() {
         return false;
     }
     
-    if (!audioManager->loadSound("walking", "sounds/walking.wav")) {
+    if (!audioManager->loadSound("walking", "view/resources/sounds/walking.wav")) {
         std::cerr << "Erreur: Impossible de charger le son de marche" << std::endl;
         return false;
     }
     
     // can load other sounds
-    // audioManager->loadSound("jump", "sounds/jump.wav");
-    audioManager->loadSound("shoot", "sounds/shoot.wav");
-    audioManager->loadSound("reload", "sounds/reload.wav");
-    audioManager->loadSound("land", "sounds/land.wav");
+    // audioManager->loadSound("jump", "view/resources/sounds/jump.wav");
+    audioManager->loadSound("shoot", "view/resources/sounds/shoot.wav");
+    audioManager->loadSound("reload", "view/resources/sounds/reload.wav");
+    audioManager->loadSound("land", "view/resources/sounds/land.wav");
     
     return true;
 }

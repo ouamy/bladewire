@@ -66,7 +66,7 @@ bool Renderer::initialize() {
         return false;
     }
 
-    model = std::make_unique<Model>("view/skins/men/yahya/shelby.fbx");
+    model = std::make_unique<Model>("view/resources/skins/men/yahya/shelby.fbx");
 
     return true;
 }
