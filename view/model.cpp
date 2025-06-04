@@ -175,17 +175,13 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
             Texture texture;
 
             std::string textureRelativePath = std::string(str.C_Str());
-
-            std::filesystem::path candidate1 = std::filesystem::path(directory) / textureRelativePath;
-            std::filesystem::path candidate2 = std::filesystem::path(directory) / std::filesystem::path(textureRelativePath).filename();
+            std::filesystem::path candidate = std::filesystem::path(directory) / std::filesystem::path(textureRelativePath).filename();
 
             std::filesystem::path finalPath;
-            if (std::filesystem::exists(candidate1)) {
-                finalPath = candidate1;
-            } else if (std::filesystem::exists(candidate2)) {
-                finalPath = candidate2;
+            if (std::filesystem::exists(candidate)) {
+                finalPath = candidate;
             } else {
-                std::cerr << "Texture file not found at: " << candidate1 << " or " << candidate2 << std::endl;
+                std::cerr << "Texture file not found at: " << candidate << " or " << candidate << std::endl;
                 return textures;
             }
 
