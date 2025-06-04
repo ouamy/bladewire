@@ -2,7 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.hpp"
+#include "resources/stb_image.hpp"
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::vector<Texture>& textures)
     : textures(textures) {

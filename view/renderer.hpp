@@ -9,7 +9,7 @@
 #include <cmath>
 #include <cstdio>
 #define GLT_IMPLEMENTATION
-#include "gltext.hpp"
+#include "resources/gltext.hpp"
 #include "model.hpp"
 
 class Renderer {

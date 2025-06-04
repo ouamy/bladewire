@@ -7,8 +7,8 @@ sudo apt-get install libopenal-dev
 sudo apt-get install libassimp-dev
 ```
 ```bash
-g++ main.cpp controller/game_controller.cpp view/renderer.cpp view/model.cpp model/audio_manager.cpp glad/src/glad.cpp \
-    -Iglad/include -Icontroller -Iview -Imodel \
+g++ main.cpp controller/game_controller.cpp view/renderer.cpp view/model.cpp model/audio_manager.cpp view/glad/src/glad.cpp \
+    -Iview/glad/include -Icontroller -Iview -Imodel \
     -o bladewire \
     -lglfw -ldl -lGL -lopenal -lX11 -lpthread -lXrandr -lXi -lassimp
 ```
