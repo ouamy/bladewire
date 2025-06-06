@@ -19,13 +19,12 @@ private:
     GLuint shaderProgram;
     GLuint hudShader;
 
-    //
     GLTtext* glTextLabel;
     GLTtext* glTextTimer;
-
     std::unique_ptr<GLTtext> healthText;
 
     std::unique_ptr<Model> model;
+    std::unique_ptr<Model> staticModel;
 
     double countdownStartTime = 0.0;
     const double countdownDuration = 100.0; // 100 seconds countdown
@@ -33,13 +32,8 @@ private:
     unsigned int screenWidth;
     unsigned int screenHeight;
 
-    //
     char timeString[30];
     int viewportWidth, viewportHeight;
-    
-    GLuint compileShader(GLenum type, const char* src);
-    
-    GLuint createShaderProgram(const char* vertexSrc, const char* fragSrc);
     
     void drawLine(GLuint shader, glm::vec3 start, glm::vec3 end, glm::vec3 color);
     void drawQuad(GLuint shader, glm::vec2 pos, glm::vec2 size, glm::vec3 color);
@@ -64,6 +58,10 @@ public:
     void drawText(GLFWwindow* window);
     
     void cleanText();
+    
+    // Method to load a model
+    void loadModel(const std::string& path, bool isAnimated);
 };
 
 #endif // RENDERER_HPP
+

@@ -1,52 +1,7 @@
 #include "renderer.hpp"
+#include "shader.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
-
-const char* vertexShaderSrc = R"(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexCoords;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-out vec2 TexCoords;
-
-void main() {
-    TexCoords = aTexCoords;
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-}
-)";
-
-const char* hudVertexShaderSrc = R"(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-
-uniform mat4 projection;
-
-void main() {
-    gl_Position = projection * vec4(aPos, 1.0);
-}
-)";
-
-const char* fragmentShaderSrc = R"(
-#version 330 core
-in vec2 TexCoords;
-out vec4 FragColor;
-
-uniform sampler2D diffuseTexture;
-uniform vec3 color;
-uniform bool useTexture;
-
-void main() {
-    if (useTexture)
-        FragColor = texture(diffuseTexture, TexCoords);
-    else
-        FragColor = vec4(color, 1.0);
-}
-)";
 
 Renderer::Renderer(unsigned int width, unsigned int height, std::shared_ptr<GameController> ctrl)
     : controller(ctrl)
@@ -58,60 +13,49 @@ Renderer::Renderer(unsigned int width, unsigned int height, std::shared_ptr<Game
 Renderer::~Renderer() {}
 
 bool Renderer::initialize() {
-    shaderProgram = createShaderProgram(vertexShaderSrc, fragmentShaderSrc);
-    hudShader = createShaderProgram(hudVertexShaderSrc, fragmentShaderSrc);
+    // Create shader programs using the improved shader sources
+    shaderProgram = createShaderProgram(improvedVertexShaderSrc, improvedFragmentShaderSrc);
+    hudShader = createShaderProgram(improvedHudVertexShaderSrc, improvedFragmentShaderSrc);
     
     if (!shaderProgram || !hudShader) {
-        std::cerr << "Erreur: Impossible de créer les programmes de shader" << std::endl;
+        std::cerr << "Error: Could not create shader programs" << std::endl;
         return false;
     }
 
-    model = std::make_unique<Model>("view/resources/skins/men/yahya/shelby.fbx");
-
-    return true;
-}
-
-GLuint Renderer::compileShader(GLenum type, const char* src) {
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &src, nullptr);
-    glCompileShader(shader);
+    // Disable face culling to see both sides
+    glDisable(GL_CULL_FACE);
     
-    GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char infoLog[512];
-        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-        std::cerr << "Erreur de compilation du shader: " << infoLog << std::endl;
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
+
+    // Load both static and animated models
+    try {
+        // Load the static model
+        staticModel = std::make_unique<Model>("view/resources/skins/men/yahya/everyday.fbx");
+        
+        // Load the animated model
+        model = std::make_unique<Model>("view/resources/skins/men/yahya/animations/everyday_idle.fbx");
+        
+        // Initialize text rendering
+        initialiseGLText();
+        
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Error during initialization: " << e.what() << std::endl;
+        return false;
     }
-    
-    return shader;
-}
-
-GLuint Renderer::createShaderProgram(const char* vertexSrc, const char* fragSrc) {
-    GLuint vertex = compileShader(GL_VERTEX_SHADER, vertexSrc);
-    GLuint fragment = compileShader(GL_FRAGMENT_SHADER, fragSrc);
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glLinkProgram(program);
-    
-    GLint success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
-        char infoLog[512];
-        glGetProgramInfoLog(program, 512, nullptr, infoLog);
-        std::cerr << "Erreur de liaison du programme: " << infoLog << std::endl;
-    }
-    
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-    return program;
 }
 
 void Renderer::render(GLFWwindow* window) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    // Update animation if present
+    if (model && model->hasAnimation()) {
+        model->update(controller->getDeltaTime());
+    }
+    
+    // Create view and projection matrices
     glm::mat4 view = glm::lookAt(
         controller->getCameraPos(),
         controller->getCameraPos() + controller->getCameraFront(),
@@ -125,38 +69,53 @@ void Renderer::render(GLFWwindow* window) {
         100.0f
     );
     
+    // Set shader uniforms
     glUseProgram(shaderProgram);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
     
-    glm::mat4 characterModelMat = glm::mat4(1.0f);
+    // Draw the animated model
+    if (model) {
+        glm::mat4 characterModelMat = glm::mat4(1.0f);
+        glm::vec3 playerPos = controller->getCameraPos();
+        glm::vec3 offset(0.0f, -1.01f, 3.0f);
+        characterModelMat = glm::translate(glm::mat4(1.0f), playerPos + offset);
+        
+        float yawCorrection = 90.0f;
+        characterModelMat = glm::rotate(characterModelMat, glm::radians(-controller->getYaw() + yawCorrection), glm::vec3(0, 1, 0));
+        characterModelMat = glm::rotate(characterModelMat, glm::radians(0.0f), glm::vec3(1, 0, 0));
+        characterModelMat = glm::scale(characterModelMat, glm::vec3(0.006f));
 
-    glm::vec3 playerPos = controller->getCameraPos();
-    glm::vec3 offset(0.0f, -1.2f, 2.0f); // vers le bas et légèrement vers l’arrière
-    characterModelMat = glm::translate(glm::mat4(1.0f), playerPos + offset);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &characterModelMat[0][0]);
+        glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), 1);
+        model->draw(shaderProgram);
+    }
     
-    float yawCorrection = 90.0f;
-    characterModelMat = glm::rotate(characterModelMat, glm::radians(-controller->getYaw() + yawCorrection), glm::vec3(0, 1, 0));
-    characterModelMat = glm::rotate(characterModelMat, glm::radians(-90.0f), glm::vec3(1, 0, 0));
-    characterModelMat = glm::scale(characterModelMat, glm::vec3(0.7f)); // scale
+    // Draw the static model (offset to the side)
+    if (staticModel) {
+        glm::mat4 staticModelMat = glm::mat4(1.0f);
+        glm::vec3 playerPos = controller->getCameraPos();
+        glm::vec3 offset(2.0f, -1.01f, 3.0f); // Offset to the right
+        staticModelMat = glm::translate(glm::mat4(1.0f), playerPos + offset);
+        
+        float yawCorrection = 90.0f;
+        staticModelMat = glm::rotate(staticModelMat, glm::radians(-controller->getYaw() + yawCorrection), glm::vec3(0, 1, 0));
+        staticModelMat = glm::rotate(staticModelMat, glm::radians(-90.0f), glm::vec3(1, 0, 0));
+        staticModelMat = glm::scale(staticModelMat, glm::vec3(0.6f));
 
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &characterModelMat[0][0]);
-
-    glUseProgram(shaderProgram);
-    glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), true);
-    glUniform1i(glGetUniformLocation(shaderProgram, "diffuseTexture"), 0);
-    model->draw(shaderProgram);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &staticModelMat[0][0]);
+        glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), 1);
+        staticModel->draw(shaderProgram);
+    }
     
+    // Draw environment
     glm::mat4 platformModelMat = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &platformModelMat[0][0]);
-
-    glUseProgram(shaderProgram);
-    glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), false);
+    glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), 0);
     glUniform3f(glGetUniformLocation(shaderProgram, "color"), 1.0f, 1.0f, 1.0f);
 
     drawGrid();
     drawWalls();
-
     drawHUD(window);
 }
 
@@ -229,13 +188,13 @@ void Renderer::drawHUD(GLFWwindow* window) {
     glm::mat4 ortho = glm::ortho(0.0f, (float)screenWidth, 0.0f, (float)screenHeight);
     glUniformMatrix4fv(glGetUniformLocation(hudShader, "projection"), 1, GL_FALSE, &ortho[0][0]);
 
-    // teams
+    // Teams
     for (int i = 0; i < 5; ++i) {
         drawQuad(hudShader, { 400 + i * 60, screenHeight - 40 }, { 40, 20 }, { 1, 1, 1 });
         drawQuad(hudShader, { screenWidth - 700 + i * 60, screenHeight - 40 }, { 40, 20 }, { 1, 0, 0 });
     }
 
-    // crosshair
+    // Crosshair
     float cx = screenWidth / 2.0f;
     float cy = screenHeight / 2.0f;
     float thickness = 4.0f;
@@ -246,9 +205,9 @@ void Renderer::drawHUD(GLFWwindow* window) {
     drawText(window);
 }
 
-void Renderer::initialiseGLText(){
+void Renderer::initialiseGLText() {
     if (!gltInit()) {
-        std::cerr << "Erreur: Impossible d'initialiser glText" << std::endl;
+        std::cerr << "Error: Could not initialize glText" << std::endl;
     }
     glTextLabel = gltCreateText();
     glTextTimer = gltCreateText();
@@ -333,10 +292,9 @@ void Renderer::drawText(GLFWwindow* window) {
         GLT_LEFT,
         GLT_BOTTOM
     );
-
 }
 
-void Renderer::cleanText(){
+void Renderer::cleanText() {
     gltDeleteText(glTextLabel);
     gltDeleteText(glTextTimer);
     gltTerminate();
@@ -400,3 +358,16 @@ void Renderer::drawWalls() {
     drawWall(shaderProgram, {min - thickness, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
     drawWall(shaderProgram, {max, 0.0f, min}, {thickness, height, max - min + thickness}, {1.0f, 1.0f, 1.0f});
 }
+
+void Renderer::loadModel(const std::string& path, bool isAnimated) {
+    try {
+        if (isAnimated) {
+            model = std::make_unique<Model>(path);
+        } else {
+            staticModel = std::make_unique<Model>(path);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading model: " << e.what() << std::endl;
+    }
+}
+
