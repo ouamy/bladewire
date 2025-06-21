@@ -7,8 +7,8 @@ sudo apt update
 sudo apt install libxi-dev
 sudo apt install libglm-dev
 sudo apt install libglfw3-dev
-sudo apt-get install libopenal-dev
-sudo apt-get install libassimp-dev
+sudo apt install libopenal-dev
+sudo apt install libassimp-dev
 ```
 
 ## Compile
