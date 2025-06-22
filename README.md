@@ -24,7 +24,7 @@ g++ main.cpp controller/game_controller.cpp view/renderer.cpp view/model.cpp vie
 ### Windows
 ```bash
 chmod u+x windows/build/compile.sh
-./ windows/build/compile.sh
+./windows/build/compile.sh
 ```
 
 ## Run
