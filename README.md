@@ -67,6 +67,11 @@ x86_64-w64-mingw32-g++ main.cpp controller/game_controller.cpp view/renderer.cpp
 mv dependencies windows
 
 mv bladewire.exe windows/build
+
+rm windows/dependencies/1.0.1.zip
+rm windows/dependencies/1.23.1.zip
+rm windows/dependencies/glfw-3.3.8.bin.WIN64.zip
+rm windows/dependencies/v5.3.1.zip
 ```
 
 ## Run
