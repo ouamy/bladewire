@@ -54,7 +54,7 @@ make
 sudo make install
 
 cd ~
-mv bladewire/windows/libs bladewire/dependencies/openal-soft-1.23.1/
+cp bladewire/windows/libs bladewire/dependencies/openal-soft-1.23.1/
 cd bladewire
 
 x86_64-w64-mingw32-g++ main.cpp controller/game_controller.cpp view/renderer.cpp view/model.cpp view/animation/animation.cpp model/audio_manager.cpp view/glad/src/glad.cpp \
